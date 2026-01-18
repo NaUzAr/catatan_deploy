@@ -90,6 +90,14 @@ events {
 }
 
 http {
+    # Logging (untuk debug & monitoring)
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    # Gzip compression (website lebih cepat)
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript;
+
     # ===== DOMAIN 1: forlizz.online =====
     server {
         listen 80;

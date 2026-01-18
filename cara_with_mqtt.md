@@ -125,6 +125,60 @@ Username: (kosong jika allow_anonymous true)
 Password: (kosong jika allow_anonymous true)
 ```
 
+### MQTT dengan Username & Password (Recommended)
+
+**1. Buat password file:**
+```bash
+# Masuk ke container
+docker exec -it mqtt_broker sh
+
+# Buat user (ganti USERNAME dengan nama user)
+mosquitto_passwd -c /mosquitto/config/password.txt USERNAME
+# Ketik password 2x, lalu exit
+exit
+```
+
+**2. Update mosquitto.conf:**
+```bash
+nano /opt/docker-apps/mqtt/config/mosquitto.conf
+```
+
+```
+# Mosquitto Configuration
+listener 1883
+listener 9001
+protocol websockets
+
+# Authentication - DENGAN PASSWORD
+allow_anonymous false
+password_file /mosquitto/config/password.txt
+
+# Persistence
+persistence true
+persistence_location /mosquitto/data/
+
+# Logging
+log_dest file /mosquitto/log/mosquitto.log
+log_dest stdout
+```
+
+**3. Restart MQTT:**
+```bash
+cd /opt/docker-apps/mqtt && docker compose restart
+
+# Test dengan auth
+docker exec mqtt_broker mosquitto_pub -t "test" -m "hello" -u USERNAME -P PASSWORD
+```
+
+**Contoh koneksi ESP32:**
+```cpp
+const char* mqtt_server = "203.194.115.76";
+const char* mqtt_user = "USERNAME";
+const char* mqtt_pass = "PASSWORD";
+
+client.connect("ESP32Client", mqtt_user, mqtt_pass);
+```
+
 ### Firewall untuk MQTT
 
 ```bash

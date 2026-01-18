@@ -90,7 +90,47 @@ events {
 }
 
 http {
-    # TAMBAHKAN DOMAIN BARU DI BAWAH INI
+    # ===== DOMAIN 1: forlizz.online =====
+    server {
+        listen 80;
+        server_name forlizz.online www.forlizz.online;
+        
+        location / {
+            proxy_pass http://forlizz_app:80;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+
+    # ===== DOMAIN 2: smartagri.web.id =====
+    server {
+        listen 80;
+        server_name smartagri.web.id www.smartagri.web.id;
+        
+        location / {
+            proxy_pass http://smartagri_app:80;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+
+    # ===== TEMPLATE: Copy untuk domain baru =====
+    # server {
+    #     listen 80;
+    #     server_name DOMAIN.com www.DOMAIN.com;
+    #     
+    #     location / {
+    #         proxy_pass http://CONTAINER_NAME:80;
+    #         proxy_set_header Host $host;
+    #         proxy_set_header X-Real-IP $remote_addr;
+    #         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    #         proxy_set_header X-Forwarded-Proto $scheme;
+    #     }
+    # }
 }
 ```
 
@@ -343,3 +383,77 @@ rm -rf /opt/docker-apps/NAMA_PROJECT
 - [ ] Tambah domain di nginx.conf
 - [ ] Restart nginx proxy
 - [ ] Setup DNS di Cloudflare
+
+---
+
+# 🔌 PostgreSQL Remote Access (Opsional)
+
+Jika ingin akses database dari server/device lain.
+
+## 1. Update docker-compose.yml
+
+```bash
+nano /opt/docker-apps/postgres/docker-compose.yml
+```
+
+```yaml
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: shared_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: webadmin
+      POSTGRES_PASSWORD: YOUR_PASSWORD
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"    # Tambahkan ini untuk remote access
+    networks:
+      - webapps
+
+volumes:
+  postgres_data:
+
+networks:
+  webapps:
+    external: true
+```
+
+```bash
+cd /opt/docker-apps/postgres && docker compose up -d
+```
+
+## 2. Whitelist IP dengan Firewall
+
+```bash
+# Izinkan hanya IP tertentu
+ufw allow from 182.8.225.79 to any port 5432    # Contoh IP 1
+ufw allow from 103.xxx.xxx.xxx to any port 5432 # Contoh IP 2
+
+# Reload firewall
+ufw reload
+
+# Cek status
+ufw status
+```
+
+## 3. Koneksi dari Device Lain
+
+```
+Host: YOUR_VPS_IP
+Port: 5432
+Database: db_smartagri
+Username: webadmin
+Password: YOUR_PASSWORD
+```
+
+**Contoh di Laravel .env:**
+```env
+DB_CONNECTION=pgsql
+DB_HOST=203.194.115.76
+DB_PORT=5432
+DB_DATABASE=db_smartagri
+DB_USERNAME=webadmin
+DB_PASSWORD=YOUR_PASSWORD
+```

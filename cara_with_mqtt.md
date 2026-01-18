@@ -50,6 +50,7 @@ networks:
     external: true
 ```
 
+```bash
 cd /opt/docker-apps/postgres && docker compose up -d
 ```
 
